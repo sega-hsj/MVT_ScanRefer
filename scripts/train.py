@@ -33,13 +33,6 @@ def init():
     os.system('cp {}/models/{}.py {}'.format(CONF.PATH.BASE, CONF.model, backup_dir))
     os.system('cp {}/models/{}.py {}'.format(CONF.PATH.BASE, CONF.language_module, backup_dir))
 
-    if CONF.attribute_module:
-        os.system('cp {}/models/{}.py {}'.format(CONF.PATH.BASE, CONF.attribute_module, backup_dir))
-    if CONF.relation_module:
-        os.system('cp {}/models/{}.py {}'.format(CONF.PATH.BASE, CONF.relation_module, backup_dir))
-    if CONF.scene_module:
-        os.system('cp {}/models/{}.py {}'.format(CONF.PATH.BASE, CONF.scene_module, backup_dir))
-
     # random seed
     random.seed(CONF.manual_seed)
     np.random.seed(CONF.manual_seed)
