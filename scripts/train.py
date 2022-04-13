@@ -17,8 +17,8 @@ from lib.solver import Solver
 from lib.config import CONF
 from models.instancerefer import InstanceRefer
 
-SCANREFER_TRAIN = json.load(open(os.path.join("/mnt/proj58/sjhuang/grounding3d/InstanceRefer/data/scanrefer", "ScanRefer_filtered_train.json")))
-SCANREFER_VAL = json.load(open(os.path.join("/mnt/proj58/sjhuang/grounding3d/InstanceRefer/data/scanrefer", "ScanRefer_filtered_val.json")))
+SCANREFER_TRAIN = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_train.json")))
+SCANREFER_VAL = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_val.json")))
 
 # constants
 DC = ScannetDatasetConfig()
