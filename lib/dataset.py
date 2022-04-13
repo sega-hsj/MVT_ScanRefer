@@ -100,10 +100,10 @@ class ScannetReferenceDataset(Dataset):
         lang_len = lang_len if lang_len <= CONF.TRAIN.MAX_DES_LEN else CONF.TRAIN.MAX_DES_LEN
 
         # get pc
-        mesh_vertices = np.load(os.path.join("/mnt/proj2/sjhuang/scanrefer_{}".format(self.split), scene_id) + "_aligned_vert.npy")  # axis-aligned
-        instance_labels = np.load(os.path.join("/mnt/proj2/sjhuang/scanrefer_{}".format(self.split), scene_id) + "_ins_label_pg.npy")
-        semantic_labels = np.load(os.path.join("/mnt/proj2/sjhuang/scanrefer_{}".format(self.split), scene_id) + "_sem_label_pg.npy")
-        instance_bboxes = np.load(os.path.join("/mnt/proj2/sjhuang/scanrefer_{}".format(self.split), scene_id) + "_aligned_bbox.npy")
+        mesh_vertices = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id) + "_aligned_vert.npy")  # axis-aligned
+        instance_labels = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id) + "_ins_label_pg.npy")
+        semantic_labels = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id) + "_sem_label_pg.npy")
+        instance_bboxes = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id) + "_aligned_bbox.npy")
 
         if not self.use_color:
             point_cloud = mesh_vertices[:, 0:3]  # do not use color for now
