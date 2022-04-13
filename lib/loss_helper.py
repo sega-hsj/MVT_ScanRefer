@@ -191,9 +191,7 @@ def get_loss(data_dict, config):
                                         ref_size_class_label, ref_size_residual_label)
     ref_gt_bbox = get_3d_box_batch(ref_gt_obb[:, 3:6], ref_gt_obb[:, 6], ref_gt_obb[:, 0:3])
 
-    # aux_scores = data_dict['aux_scores']
     scores = data_dict['scores']
-    # view_scores = data_dict['view_scores']
 
     pred_obb_batch = data_dict['pred_obb_batch'].cpu()
     batch_size,num_filtered_obj = pred_obb_batch.shape[:2]
@@ -213,12 +211,6 @@ def get_loss(data_dict, config):
     
     aux_clf_loss_m = 0.0
     aux_view_loss = 0.0
-    # view_number = view_scores.shape[-1]
-    # if view_number > 1:
-    #     aux_clf_loss = nn.CrossEntropyLoss(reduction='none')(aux_scores.reshape(batch_size*view_number, -1), gt_ids[:,None].repeat(1,4).reshape(-1)).reshape(batch_size,view_number)
-    #     view_target = (-aux_clf_loss * 5).softmax(dim=-1).detach()
-    #     aux_view_loss = - torch.mean(torch.sum(view_target * view_scores.log_softmax(dim=-1),dim=-1))
-    #     aux_clf_loss_m = aux_clf_loss.mean()
 
     data_dict['loss'] = ref_loss + 0.5 * lang_loss
     data_dict['ref_loss'] = ref_loss
