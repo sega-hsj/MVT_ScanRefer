@@ -36,8 +36,8 @@ class InstanceRefer(nn.Module):
         self.voxel_size = np.array([self.voxel_size_ap]*3)
         self.object_encoder = SparseConvEncoder(input_feature_dim)
 
-        self.language_tokenizer = BertTokenizer.from_pretrained("/mnt/proj58/sjhuang/grounding3d/bert")
-        self.language_encoder = BertModel.from_pretrained("/mnt/proj58/sjhuang/grounding3d/bert")
+        self.language_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        self.language_encoder = BertModel.from_pretrained('bert-base-uncased')
         self.language_encoder.encoder.layer = self.language_encoder.encoder.layer[:3]
 
         self.refer_encoder = nn.TransformerDecoder(torch.nn.TransformerDecoderLayer(d_model=768, nhead=8, activation="gelu"), num_layers=4)
