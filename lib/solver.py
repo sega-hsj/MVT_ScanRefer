@@ -20,15 +20,18 @@ from lib.scheduler_helper import BNMomentumScheduler
 
 from utils.eta import decode_eta
 
+#[loss] train_seg_loss: {train_seg_loss}
+#[sco.] train_seg_acc: {train_seg_acc}
+#[val]   val_seg_acc: {val_seg_acc}
+
+
 ITER_REPORT_TEMPLATE = """
 -------------------------------iter: [{epoch_id}: {iter_id}/{total_iter}]-------------------------------
 [loss] train_loss: {train_loss}
 [loss] train_ref_loss: {train_ref_loss}
 [loss] train_lang_loss: {train_lang_loss}
-[loss] train_seg_loss: {train_seg_loss}
 [loss] train_lang_acc: {train_lang_acc}
 [sco.] train_ref_acc: {train_ref_acc}
-[sco.] train_seg_acc: {train_seg_acc}
 [sco.] train_iou_rate_0.25: {train_iou_rate_25}, train_iou_rate_0.5: {train_iou_rate_5}
 [info] mean_fetch_time: {mean_fetch_time}s
 [info] mean_forward_time: {mean_forward_time}s
@@ -43,7 +46,6 @@ EPOCH_REPORT_TEMPLATE = """
 [val]   val_loss: {val_loss}
 [val]   val_lang_loss: {val_lang_loss}
 [val]   val_lang_acc: {val_lang_acc}
-[val]   val_seg_acc: {val_seg_acc}
 [val]   val_ref_acc: {val_ref_acc}
 [val]   val_iou_rate_0.25: {val_iou_rate_25}, val_iou_rate_0.5: {val_iou_rate_5}
 """
@@ -213,7 +215,7 @@ class Solver():
         # dump
         self._running_log["ref_loss"] = data_dict["ref_loss"]
         self._running_log["lang_loss"] = data_dict["lang_loss"]
-        self._running_log["seg_loss"] = data_dict["seg_loss"]
+        # self._running_log["seg_loss"] = data_dict["seg_loss"]
         self._running_log["loss"] = data_dict["loss"]
 
     def _eval(self, data_dict):
@@ -225,7 +227,7 @@ class Solver():
         # dump
         self._running_log["lang_acc"] = data_dict["lang_acc"].item()
         self._running_log["ref_acc"] = np.mean(data_dict["ref_acc"])
-        self._running_log["seg_acc"] = data_dict["seg_acc"].item()
+        # self._running_log["seg_acc"] = data_dict["seg_acc"].item()
         self._running_log['ref_iou'] = data_dict['ref_iou']
 
     def _feed(self, dataloader, phase, epoch_id):
@@ -250,11 +252,11 @@ class Solver():
                 "loss": 0,
                 "ref_loss": 0,
                 "lang_loss": 0,
-                "seg_loss": 0,
+                # "seg_loss": 0,
                 # acc
                 "lang_acc": 0,
                 "ref_acc": 0,
-                "seg_acc": 0,
+                # "seg_acc": 0,
                 "iou_rate_0.25": 0,
                 "iou_rate_0.5": 0
             }
@@ -285,11 +287,11 @@ class Solver():
             self.log[phase]["loss"].append(self._running_log["loss"].item())
             self.log[phase]["ref_loss"].append(self._running_log["ref_loss"].item())
             self.log[phase]["lang_loss"].append(self._running_log["lang_loss"].item())
-            self.log[phase]["seg_loss"].append(self._running_log["seg_loss"].item())
+            # self.log[phase]["seg_loss"].append(self._running_log["seg_loss"].item())
 
             self.log[phase]["lang_acc"].append(self._running_log["lang_acc"])
             self.log[phase]["ref_acc"].append(self._running_log["ref_acc"])
-            self.log[phase]["seg_acc"].append(self._running_log["seg_acc"])
+            # self.log[phase]["seg_acc"].append(self._running_log["seg_acc"])
             self.log[phase]['ref_iou'] += self._running_log['ref_iou']
 
             ious = self.log[phase]['ref_iou']
@@ -329,10 +331,10 @@ class Solver():
                 self.best["loss"] = np.mean(self.log[phase]["loss"])
                 self.best["ref_loss"] = np.mean(self.log[phase]["ref_loss"])
                 self.best["lang_loss"] = np.mean(self.log[phase]["lang_loss"])
-                self.best["seg_loss"] = np.mean(self.log[phase]["seg_loss"])
+                # self.best["seg_loss"] = np.mean(self.log[phase]["seg_loss"])
                 self.best["lang_acc"] = np.mean(self.log[phase]["lang_acc"])
                 self.best["ref_acc"] = np.mean(self.log[phase]["ref_acc"])
-                self.best["seg_acc"] = np.mean(self.log[phase]["seg_acc"])
+                # self.best["seg_acc"] = np.mean(self.log[phase]["seg_acc"])
                 self.best["iou_rate_0.25"] = self.log[phase]['iou_rate_0.25']
                 self.best["iou_rate_0.5"] = self.log[phase]['iou_rate_0.5']
 
@@ -343,8 +345,8 @@ class Solver():
 
     def _dump_log(self, phase):
         log = {
-            "loss": ["loss", "ref_loss", "lang_loss", "seg_loss"],
-            "score": ["lang_acc", "ref_acc", "seg_acc"]
+            "loss": ["loss", "ref_loss", "lang_loss"],#, "seg_loss"],
+            "score": ["lang_acc", "ref_acc"]#, "seg_acc"]
         }
         for key in log:
             for item in log[key]:
@@ -412,10 +414,10 @@ class Solver():
             train_loss=round(np.mean([v for v in self.log["train"]["loss"]]), 5),
             train_ref_loss=round(np.mean([v for v in self.log["train"]["ref_loss"]]), 5),
             train_lang_loss=round(np.mean([v for v in self.log["train"]["lang_loss"]]), 5),
-            train_seg_loss=round(np.mean([v for v in self.log["train"]["seg_loss"]]), 5),
+            # train_seg_loss=round(np.mean([v for v in self.log["train"]["seg_loss"]]), 5),
             train_lang_acc=round(np.mean([v for v in self.log["train"]["lang_acc"]]), 5),
             train_ref_acc=round(np.mean([v for v in self.log["train"]["ref_acc"]]), 5),
-            train_seg_acc=round(np.mean([v for v in self.log["train"]["seg_acc"]]), 5),
+            # train_seg_acc=round(np.mean([v for v in self.log["train"]["seg_acc"]]), 5),
             train_iou_rate_25=round(self.log['train']['iou_rate_0.25'], 5),
             train_iou_rate_5=round(self.log['train']['iou_rate_0.5'], 5),
             mean_fetch_time=round(np.mean(fetch_time), 5),
@@ -433,11 +435,11 @@ class Solver():
         self._log("epoch [{}/{}] done...".format(epoch_id + 1, self.epoch))
         epoch_report = self.__epoch_report_template.format(
             val_loss=round(np.mean([v for v in self.log["val"]["loss"]]), 5),
-            val_seg_loss=round(np.mean([v for v in self.log["val"]["seg_loss"]]), 5),
+            # val_seg_loss=round(np.mean([v for v in self.log["val"]["seg_loss"]]), 5),
             val_ref_loss=round(np.mean([v for v in self.log["val"]["ref_loss"]]), 5),
             val_lang_loss=round(np.mean([v for v in self.log["val"]["lang_loss"]]), 5),
             val_lang_acc=round(np.mean([v for v in self.log["val"]["lang_acc"]]), 5),
-            val_seg_acc=round(np.mean([v for v in self.log["val"]["seg_acc"]]), 5),
+            # val_seg_acc=round(np.mean([v for v in self.log["val"]["seg_acc"]]), 5),
             val_ref_acc=round(np.mean([v for v in self.log["val"]["ref_acc"]]), 5),
             val_iou_rate_25=round(self.log['val']['iou_rate_0.25'], 5),
             val_iou_rate_5=round(self.log['val']['iou_rate_0.5'], 5),
@@ -474,11 +476,11 @@ class Solver():
                 "loss": [],
                 "ref_loss": [],
                 "lang_loss": [],
-                "seg_loss": [],
+                # "seg_loss": [],
                 # scores (float, not torch.cuda.FloatTensor)
                 "lang_acc": [],
                 "ref_acc": [],
-                "seg_acc": [],
+                # "seg_acc": [],
                 'ref_iou': [],
                 "iou_rate_0.25": [],
                 "iou_rate_0.5": []

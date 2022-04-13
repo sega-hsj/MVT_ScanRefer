@@ -8,6 +8,7 @@ from torchsparse import SparseTensor
 from torchsparse.utils import sparse_quantize, sparse_collate_tensors
 
 
+
 class AttributeModule(nn.Module):
     def __init__(self, input_feature_dim, args, v_dim=128, h_dim=256, l_dim=256):
         super().__init__()

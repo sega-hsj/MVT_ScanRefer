@@ -75,15 +75,16 @@ class SparseConvEncoder(nn.Module):
         )
 
         self.stage3 = nn.Sequential(
-            BasicConvolutionBlock(128, 128, ks=2, stride=2),
-            ResidualBlock(128, 128, 3),
+            BasicConvolutionBlock(128, 256, ks=2, stride=2),
+            ResidualBlock(256, 256, 3),
         )
 
         self.stage4 = nn.Sequential(
-            BasicConvolutionBlock(128, 128, ks=2, stride=2),
-            ResidualBlock(128, 128, 3),
+            BasicConvolutionBlock(256, 512, ks=2, stride=2),
+            ResidualBlock(512, 512, 3),
         )
-
+        self.pooling = spnn.GlobalMaxPooling()
+        self.fc = nn.Sequential(nn.Linear(512, 512), nn.LayerNorm(512), nn.ReLU(), nn.Linear(512, 512))
 
     def forward(self, x):
         x = self.stem(x)
@@ -91,7 +92,8 @@ class SparseConvEncoder(nn.Module):
         x = self.stage2(x)
         x = self.stage3(x)
         x = self.stage4(x)
-
+        x = self.pooling(x)
+        x = self.fc(x)
         return x
 
 

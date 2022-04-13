@@ -15,6 +15,7 @@ from utils.pc_utils import random_sampling, rotx, roty, rotz
 from data.scannet.model_util_scannet import ScannetDatasetConfig, rotate_aligned_boxes_along_axis
 from torchsparse import SparseTensor
 from torchsparse.utils import sparse_collate_fn, sparse_quantize
+from transformers import DistilBertTokenizer, DistilBertModel, DistilBertConfig
 
 # data setting
 DC = ScannetDatasetConfig()
@@ -52,8 +53,15 @@ class ScannetReferenceDataset(Dataset):
         # load data
         self._load_data()
 
-        with open(GLOVE_PICKLE, "rb") as f:
-            self.glove = pickle.load(f)
+        # self.language_tokenizer = DistilBertTokenizer.from_pretrained("/mnt/proj58/sjhuang/grounding3d/distillbert")
+        # self.raw_class_list = []
+        # for name in self.raw2id.keys():
+        #     self.raw_class_list.append(name)
+        # class_token = self.language_tokenizer(self.raw_class_list, return_tensors='pt', padding=True)
+        # self.class_name_ids = class_token.input_ids
+        # self.class_name_masks = class_token.attention_mask
+        # with open(GLOVE_PICKLE, "rb") as f:
+        #     self.glove = pickle.load(f)
 
         self.voxel_size_ap = np.array([self.args.voxel_size_ap, self.args.voxel_size_ap, self.args.voxel_size_ap])
         self.voxel_size_glp = np.array([self.args.voxel_size_glp, self.args.voxel_size_glp, self.args.voxel_size_glp])
@@ -67,7 +75,7 @@ class ScannetReferenceDataset(Dataset):
         object_name = " ".join(self.scanrefer[idx]["object_name"].split("_"))
         ann_id = int(self.scanrefer[idx]["ann_id"])
         object_cat = self.raw2label[object_name] if object_name in self.raw2label else 17
-
+        object_raw_cat = object_name
         # tokenize the description
         tokens = self.scanrefer[idx]["token"]
         embeddings = np.zeros((CONF.TRAIN.MAX_DES_LEN, 300))
@@ -77,10 +85,10 @@ class ScannetReferenceDataset(Dataset):
                 token = tokens[token_id]
                 if token.isspace():
                     continue
-                if token in self.glove:
-                    embeddings[token_id] = self.glove[token]
-                else:
-                    embeddings[token_id] = self.glove["unk"]
+                # if token in self.glove:
+                #     embeddings[token_id] = self.glove[token]
+                # else:
+                embeddings[token_id] = 0 #self.glove["unk"]
 
             else:
                 break
@@ -92,10 +100,10 @@ class ScannetReferenceDataset(Dataset):
         lang_len = lang_len if lang_len <= CONF.TRAIN.MAX_DES_LEN else CONF.TRAIN.MAX_DES_LEN
 
         # get pc
-        mesh_vertices = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id) + "_aligned_vert.npy")  # axis-aligned
-        instance_labels = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id) + "_ins_label_pg.npy")
-        semantic_labels = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id) + "_sem_label_pg.npy")
-        instance_bboxes = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id) + "_aligned_bbox.npy")
+        mesh_vertices = np.load(os.path.join("/mnt/proj2/sjhuang/scanrefer_{}".format(self.split), scene_id) + "_aligned_vert.npy")  # axis-aligned
+        instance_labels = np.load(os.path.join("/mnt/proj2/sjhuang/scanrefer_{}".format(self.split), scene_id) + "_ins_label_pg.npy")
+        semantic_labels = np.load(os.path.join("/mnt/proj2/sjhuang/scanrefer_{}".format(self.split), scene_id) + "_sem_label_pg.npy")
+        instance_bboxes = np.load(os.path.join("/mnt/proj2/sjhuang/scanrefer_{}".format(self.split), scene_id) + "_aligned_bbox.npy")
 
         if not self.use_color:
             point_cloud = mesh_vertices[:, 0:3]  # do not use color for now
@@ -294,6 +302,9 @@ class ScannetReferenceDataset(Dataset):
         data_dict["object_id"] = np.array(int(object_id)).astype(np.int64)
         data_dict["ann_id"] = np.array(ann_id).astype(np.int64)
         data_dict["object_cat"] = np.array(object_cat).astype(np.int64)
+        # data_dict["object_raw_cat"] = object_raw_cat
+        # data_dict["class_name_ids"] = self.class_name_ids
+        # data_dict["class_name_masks"] = self.class_name_masks
         data_dict["unique_multiple"] = np.array(
             self.unique_multiple_lookup[scene_id][str(object_id)][str(ann_id)]).astype(np.int64)
 
@@ -307,6 +318,7 @@ class ScannetReferenceDataset(Dataset):
         lines = [line.rstrip() for line in open(SCANNET_V2_TSV)]
         lines = lines[1:]
         raw2label = {}
+        raw2id = {}
         for i in range(len(lines)):
             label_classes_set = set(scannet_labels)
             elements = lines[i].split('\t')
@@ -316,8 +328,8 @@ class ScannetReferenceDataset(Dataset):
                 raw2label[raw_name] = scannet2label['others']
             else:
                 raw2label[raw_name] = scannet2label[nyu40_name]
-
-        return raw2label
+            raw2id[raw_name] = i
+        return raw2label, raw2id
 
     def _get_unique_multiple_lookup(self):
         all_sem_labels = {}
@@ -436,7 +448,7 @@ class ScannetReferenceDataset(Dataset):
 
         # store
         self.raw2nyuid = raw2nyuid
-        self.raw2label = self._get_raw2label()
+        self.raw2label, self.raw2id = self._get_raw2label()
         self.unique_multiple_lookup = self._get_unique_multiple_lookup()
 
     def _translate(self, point_set, bbox):

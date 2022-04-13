@@ -161,35 +161,9 @@ def compute_scene_mask_loss(data_dict):
     return loss, acc
 
 
-def compute_box_loss(data_dict, box_mask):
-    """ Compute 3D bounding box loss.
-    Args:
-        data_dict: dict (read-only)
-    Returns:
-        center_loss
-        size_reg_loss
-    """
-
-    # Compute center loss
-    pred_center = data_dict['center']
-    pred_size_residual = data_dict['size_residual']
-
-    gt_center = data_dict['ref_center_label']
-    gt_size_residual = data_dict['ref_size_residual_label']
-
-    creterion = nn.SmoothL1Loss(reduction='none')
-    center_loss = creterion(pred_center, gt_center)
-    center_loss = (center_loss * box_mask.unsqueeze(1)).sum() / (box_mask.sum() + 1e-6)
-    size_loss = creterion(pred_size_residual, gt_size_residual)
-    size_loss = (size_loss * box_mask.unsqueeze(1)).sum() / (box_mask.sum() + 1e-6)
-
-    return center_loss, size_loss
-
-
 def compute_lang_classification_loss(data_dict):
     criterion = torch.nn.CrossEntropyLoss()
     loss = criterion(data_dict["lang_scores"], data_dict["object_cat"])
-
     return loss
 
 
@@ -205,7 +179,6 @@ def get_loss(data_dict, config):
     """
     lang_loss = compute_lang_classification_loss(data_dict)
     data_dict["lang_loss"] = lang_loss
-    seg_loss, seg_acc = compute_scene_mask_loss(data_dict)
 
     # get ref gt
     ref_center_label = data_dict["ref_center_label"].detach().cpu().numpy()
@@ -218,52 +191,37 @@ def get_loss(data_dict, config):
                                         ref_size_class_label, ref_size_residual_label)
     ref_gt_bbox = get_3d_box_batch(ref_gt_obb[:, 3:6], ref_gt_obb[:, 6], ref_gt_obb[:, 0:3])
 
-    attribute_scores = data_dict['attribute_scores']
-    relation_scores = data_dict['relation_scores']
-    scene_scores = data_dict['scene_scores']
+    # aux_scores = data_dict['aux_scores']
+    scores = data_dict['scores']
+    # view_scores = data_dict['view_scores']
 
-    pred_obb_batch = data_dict['pred_obb_batch']
-    batch_size = len(pred_obb_batch)
-    cluster_label = []
-    box_mask = torch.zeros(batch_size).cuda()
+    pred_obb_batch = data_dict['pred_obb_batch'].cpu()
+    batch_size,num_filtered_obj = pred_obb_batch.shape[:2]
 
-    criterion = ContrastiveLoss(margin=0.2, gamma=5)
-    ref_loss = torch.zeros(1).cuda().requires_grad_(True)
-    start_idx = 0
-    for i in range(batch_size):
-        pred_obb = pred_obb_batch[i]  # (num, 7)
-        num_filtered_obj = pred_obb.shape[0]
-        if num_filtered_obj == 0:
-            cluster_label.append([])
-            box_mask[i] = 1
-            continue
+    pred_bbox = get_3d_box_batch(pred_obb_batch[:, :, 3:6], pred_obb_batch[:, :, 6], pred_obb_batch[:, :, 0:3])
+    gt_box = np.tile(np.expand_dims(ref_gt_bbox,axis=1), (1, num_filtered_obj, 1, 1))
+    ious = box3d_iou_batch(pred_bbox.reshape(-1,8,3), gt_box.reshape(-1,8,3)).reshape(batch_size,num_filtered_obj)
+    ious_max = np.tile(ious.max(axis=1,keepdims=True),(1,num_filtered_obj))
+    labels = torch.zeros((batch_size,num_filtered_obj)).cuda()
 
-        label = np.zeros(num_filtered_obj)
-        pred_bbox = get_3d_box_batch(pred_obb[:, 3:6], pred_obb[:, 6], pred_obb[:, 0:3])
-        ious = box3d_iou_batch(pred_bbox, np.tile(ref_gt_bbox[i], (num_filtered_obj, 1, 1)))
-        label[ious.argmax()] = 1  # treat the bbox with highest iou score as the gt
+    labels[torch.from_numpy(ious==ious_max).cuda()] = 1
+    cluster_label = labels
 
-        label = torch.FloatTensor(label).cuda()
-        cluster_label.append(label)
-        if num_filtered_obj == 1: continue
+    gt_ids = ious.argmax(axis=1)
+    gt_ids = torch.from_numpy(gt_ids).long().cuda()
+    ref_loss = nn.CrossEntropyLoss()(scores, gt_ids)
+    
+    aux_clf_loss_m = 0.0
+    aux_view_loss = 0.0
+    # view_number = view_scores.shape[-1]
+    # if view_number > 1:
+    #     aux_clf_loss = nn.CrossEntropyLoss(reduction='none')(aux_scores.reshape(batch_size*view_number, -1), gt_ids[:,None].repeat(1,4).reshape(-1)).reshape(batch_size,view_number)
+    #     view_target = (-aux_clf_loss * 5).softmax(dim=-1).detach()
+    #     aux_view_loss = - torch.mean(torch.sum(view_target * view_scores.log_softmax(dim=-1),dim=-1))
+    #     aux_clf_loss_m = aux_clf_loss.mean()
 
-        attribute_score = attribute_scores[start_idx:start_idx + num_filtered_obj]
-        relation_score = relation_scores[start_idx:start_idx + num_filtered_obj]
-        scene_score = scene_scores[start_idx:start_idx + num_filtered_obj]
-        score = attribute_score + relation_score + scene_score
-
-        start_idx += num_filtered_obj
-        if ious.max() < 0.2: continue
-
-        ref_loss = ref_loss + criterion(score, label)
-
-    ref_loss = ref_loss / batch_size
+    data_dict['loss'] = ref_loss + 0.5 * lang_loss
     data_dict['ref_loss'] = ref_loss
-
-    data_dict['loss'] = 10 * ref_loss + lang_loss + seg_loss
-    data_dict["seg_loss"] = seg_loss
-    data_dict['seg_acc'] = seg_acc
-    data_dict['seg_loss'] = seg_loss
+    data_dict['lang_loss'] = lang_loss
     data_dict['cluster_label'] = cluster_label
-
     return data_dict

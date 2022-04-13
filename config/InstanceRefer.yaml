@@ -3,7 +3,7 @@ GENERAL:
 
 DATA:
   dataset: ScanRefer
-  num_points: 40000
+  num_points: 30000
   num_scenes: -1
   num_classes: 18
   use_augment: True
@@ -22,7 +22,7 @@ MODEL:
 
   # Attribute Module
   attribute_module: attribute_module
-  voxel_size_ap: 0.02
+  voxel_size_ap: 0.04
 
   # Relation Module
   relation_module: relation_module
@@ -41,11 +41,11 @@ MODEL:
   use_pretrained: False
 
 TRAIN:
-  batch_size: 64
+  batch_size: 32
   num_workers: 4
-  epoch: 25
+  epoch: 30
 
-  lr: 0.001
+  lr: 0.0005
   lr_decay_step: [15, 20]
   lr_decay_rate: 0.1
   bn_decay_step:
@@ -55,7 +55,3 @@ TRAIN:
   verbose: 20
   val_step: 2000
   start_val: 0
-
-
-
-

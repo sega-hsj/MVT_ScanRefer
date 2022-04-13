@@ -17,8 +17,8 @@ from lib.solver import Solver
 from lib.config import CONF
 from models.instancerefer import InstanceRefer
 
-SCANREFER_TRAIN = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_train.json")))
-SCANREFER_VAL = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_val.json")))
+SCANREFER_TRAIN = json.load(open(os.path.join("/mnt/proj58/sjhuang/grounding3d/InstanceRefer/data/scanrefer", "ScanRefer_filtered_train.json")))
+SCANREFER_VAL = json.load(open(os.path.join("/mnt/proj58/sjhuang/grounding3d/InstanceRefer/data/scanrefer", "ScanRefer_filtered_val.json")))
 
 # constants
 DC = ScannetDatasetConfig()
@@ -109,7 +109,16 @@ def get_num_params(model):
 
 def get_solver(args, dataloader):
     model = get_model(args)
-    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
+    optimizer = optim.Adam([
+        {'params':model.language_encoder.parameters(),'lr':args.lr*0.1},
+        {'params':model.refer_encoder.parameters(), 'lr':args.lr*0.1},
+        {'params':model.object_encoder.parameters(), 'lr':args.lr},
+        {'params':model.obj_feature_mapping.parameters(), 'lr': args.lr},
+        {'params':model.box_feature_mapping.parameters(), 'lr': args.lr},
+        # {'params':model.view_clf.parameters(), 'lr': args.lr},
+        {'params':model.language_clf.parameters(), 'lr': args.lr},
+        # {'params':model.view_emb, 'lr':args.lr},
+        ], lr=args.lr)
 
     if args.use_checkpoint:
         print("loading checkpoint {}...".format(args.use_checkpoint))

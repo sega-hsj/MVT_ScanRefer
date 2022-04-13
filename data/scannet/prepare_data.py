@@ -42,6 +42,9 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
         except:
             temp_dir = pointgroup_file + '/val/'
             inst_list = pd.read_table(temp_dir + scene + '.txt', header=None)
+    elif split == "val":
+        temp_dir = pointgroup_file + '/val/'
+        inst_list = pd.read_table(temp_dir + scene + '.txt', header=None)
     else:
         temp_dir = pointgroup_file + '/test/'
         inst_list = pd.read_table(temp_dir + scene + '.txt', header=None)
