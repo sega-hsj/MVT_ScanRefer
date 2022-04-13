@@ -41,12 +41,9 @@ class InstanceRefer(nn.Module):
         self.language_encoder.encoder.layer = self.language_encoder.encoder.layer[:3]
 
         self.refer_encoder = nn.TransformerDecoder(torch.nn.TransformerDecoderLayer(d_model=768, nhead=8, activation="gelu"), num_layers=4)
-        # self.view_emb = torch.nn.Parameter(torch.rand(1,768))
 
         self.language_clf = nn.Sequential(nn.Linear(768, 768), nn.ReLU(), nn.Dropout(self.drop_rate), nn.Linear(768, self.num_classes))
-        # self.view_clf = nn.Sequential(nn.Linear(768, 768), nn.ReLU(), nn.Dropout(self.drop_rate), nn.Linear(768, 1))
         self.object_language_clf = nn.Sequential(nn.Linear(768, 768), nn.ReLU(), nn.Dropout(self.drop_rate), nn.Linear(768, 1))
-        # self.obj_clf = nn.Linear(768, self.num_classes)
 
         self.obj_feature_mapping = nn.Sequential(
             nn.Linear(self.obj_dim, 768),
