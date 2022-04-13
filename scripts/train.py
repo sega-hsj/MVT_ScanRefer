@@ -31,7 +31,6 @@ def init():
     os.system('cp {} {}'.format(CONF.config, backup_dir))
     os.system('cp {} {}'.format(CONF.PATH.BASE+'/models/util.py', backup_dir))
     os.system('cp {}/models/{}.py {}'.format(CONF.PATH.BASE, CONF.model, backup_dir))
-    os.system('cp {}/models/{}.py {}'.format(CONF.PATH.BASE, CONF.language_module, backup_dir))
 
     # random seed
     random.seed(CONF.manual_seed)
