@@ -15,7 +15,7 @@ from lib.dataset import ScannetReferenceDataset
 from lib.loss_helper import get_loss
 from lib.eval_helper import get_eval
 from data.scannet.model_util_scannet import ScannetDatasetConfig
-from models.instancerefer import InstanceRefer
+from models.mvt import MVT
 
 SCANREFER_TRAIN = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_train.json")))
 SCANREFER_VAL = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_val.json")))
