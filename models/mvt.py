@@ -19,7 +19,7 @@ sys.path.append(os.path.join(os.getcwd(), "lib"))  # HACK add the lib folder
 sys.path.append(os.path.join(os.getcwd(), "models"))  # HACK add the lib folder
 
 
-class InstanceRefer(nn.Module):
+class MVT(nn.Module):
     def __init__(self, input_feature_dim=0, args=None):
         super().__init__()
         self.args = args
