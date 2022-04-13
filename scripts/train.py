@@ -74,7 +74,7 @@ def get_model(args):
     input_channels = int(args.use_multiview) * 128 + int(args.use_normal) * 3 +\
                      int(args.use_color) * 3 + int(args.use_height + 3)
 
-    model = InstanceRefer(
+    model = MVT(
         input_feature_dim=input_channels,
         args=CONF
     )
