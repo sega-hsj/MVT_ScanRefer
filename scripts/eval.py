@@ -17,8 +17,8 @@ from lib.eval_helper import get_eval
 from data.scannet.model_util_scannet import ScannetDatasetConfig
 from models.instancerefer import InstanceRefer
 
-SCANREFER_TRAIN = json.load(open(os.path.join('/mnt/proj58/sjhuang/grounding3d/InstanceRefer/data/scanrefer', "ScanRefer_filtered_train.json")))
-SCANREFER_VAL = json.load(open(os.path.join('/mnt/proj58/sjhuang/grounding3d/InstanceRefer/data/scanrefer', "ScanRefer_filtered_val.json")))
+SCANREFER_TRAIN = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_train.json")))
+SCANREFER_VAL = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_val.json")))
 
 
 def get_dataloader(args, scanrefer, all_scene_list, split):
